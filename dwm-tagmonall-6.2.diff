@@ -1,0 +1,106 @@
+Author: Thegajout
+
+Send all clients to other monitor.
+
+Makes use of the attachbottom function from the attachbottom patch available at https://dwm.suckless.org/patches/attachbottom/ , written by Marshall Mason and Szabolcs Szucs.
+
+============================================================================
+
+diff --git a/config.def.h b/config.def.h
+index 1c0b587..400cdda 100755
+--- a/config.def.h
++++ b/config.def.h
+@@ -84,6 +84,8 @@ static Key keys[] = {
+ 	{ MODKEY,                       XK_period, focusmon,       {.i = +1 } },
+ 	{ MODKEY|ShiftMask,             XK_comma,  tagmon,         {.i = -1 } },
+ 	{ MODKEY|ShiftMask,             XK_period, tagmon,         {.i = +1 } },
++	{ MODKEY|ControlMask,           XK_comma,  tagmonall,      {.i = -1 } },
++	{ MODKEY|ControlMask,           XK_period, tagmonall,      {.i = +1 } },
+ 	TAGKEYS(                        XK_1,                      0)
+ 	TAGKEYS(                        XK_2,                      1)
+ 	TAGKEYS(                        XK_3,                      2)
+diff --git a/dwm.c b/dwm.c
+index b0b3466..f2b377f 100755
+--- a/dwm.c
++++ b/dwm.c
+@@ -147,6 +147,7 @@ static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interac
+ static void arrange(Monitor *m);
+ static void arrangemon(Monitor *m);
+ static void attach(Client *c);
++static void attachbottom(Client *c);
+ static void attachstack(Client *c);
+ static void buttonpress(XEvent *e);
+ static void checkotherwm(void);
+@@ -197,6 +198,7 @@ static void run(void);
+ static void scan(void);
+ static int sendevent(Client *c, Atom proto);
+ static void sendmon(Client *c, Monitor *m);
++static void sendmonoldtags(Client *c, Monitor *m);
+ static void setclientstate(Client *c, long state);
+ static void setfocus(Client *c);
+ static void setfullscreen(Client *c, int fullscreen);
+@@ -209,6 +211,7 @@ static void sigchld(int unused);
+ static void spawn(const Arg *arg);
+ static void tag(const Arg *arg);
+ static void tagmon(const Arg *arg);
++static void tagmonall(const Arg *arg);
+ static void tile(Monitor *);
+ static void togglebar(const Arg *arg);
+ static void togglefloating(const Arg *arg);
+@@ -407,6 +410,15 @@ attach(Client *c)
+ 	c->mon->clients = c;
+ }
+ 
++void
++attachbottom(Client *c)
++{
++	Client **tc;
++	c->next = NULL;
++	for (tc = &c->mon->clients; *tc; tc = &(*tc)->next);
++	*tc = c;
++}
++
+ void
+ attachstack(Client *c)
+ {
+@@ -1424,6 +1436,21 @@ sendmon(Client *c, Monitor *m)
+ 	arrange(NULL);
+ }
+ 
++void
++sendmonoldtags(Client *c, Monitor *m)
++{
++	if (c->mon == m)
++		return;
++	unfocus(c, 1);
++	detach(c);
++	detachstack(c);
++	c->mon = m;
++	attachbottom(c);
++	attachstack(c);
++	focus(NULL);
++	arrange(NULL);
++}
++
+ void
+ setclientstate(Client *c, long state)
+ {
+@@ -1671,6 +1698,18 @@ tagmon(const Arg *arg)
+ 	sendmon(selmon->sel, dirtomon(arg->i));
+ }
+ 
++void
++tagmonall(const Arg *arg)
++{
++	Client *c;
++
++	for (c = selmon->clients; c ; nexttiled(c->next)) {
++		if (!selmon->clients || !mons->next)
++			return;
++		sendmonoldtags(selmon->clients, dirtomon(arg->i));
++	}
++}
++
+ void
+ tile(Monitor *m)
+ {
