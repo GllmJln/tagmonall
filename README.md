@@ -4,7 +4,8 @@ Quick patch for moving all clients (windows) to another monitor. I have no real 
 
 # Note
 
-There is a patch called [tagallmon](https://github.com/bakkeby/patches/blob/master/dwm/dwm-tagallmon-6.3.diff) ] developped by [bakkeby](https://github.com/bakkeby) that accomplishes the same goal.
+There is a patch called [tagallmon](https://github.com/bakkeby/patches/blob/master/dwm/dwm-tagallmon-6.3.diff) developped by [bakkeby](https://github.com/bakkeby) that accomplishes the same goal.
+
 
 # Installation
 
